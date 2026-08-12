@@ -73,10 +73,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
           <div>
             <h3 className="text-lg font-bold text-slate-900 font-heading">
-              Webhook Endpoint Settings
+              API Endpoint Settings
             </h3>
             <p className="text-xs text-slate-500">
-              Configure your production n8n workflow trigger URL
+              Configure your backend video generation webhook URL
             </p>
           </div>
         </div>
@@ -86,7 +86,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <label className="flex items-center justify-between text-xs font-bold text-slate-700">
               <span className="flex items-center gap-1.5">
                 <Link className="w-3.5 h-3.5 text-blue-600" />
-                n8n Webhook Endpoint URL
+                API Webhook Endpoint URL
               </span>
               <button
                 type="button"
@@ -103,7 +103,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onChange={(e) => setInputUrl(e.target.value)}
               required
               className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://n8n.buildahustle.biz/webhook/..."
+              placeholder="https://your-domain.com/webhook/..."
             />
           </div>
 
@@ -126,7 +126,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 : testStatus === 'success'
                 ? 'Endpoint Responding!'
                 : testStatus === 'failed'
-                ? 'Ping Failed (CORS or Offline)'
+                ? 'Ping Failed'
                 : 'Test Endpoint Reachability'}
             </button>
           </div>

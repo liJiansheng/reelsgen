@@ -55,6 +55,7 @@ export function App() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const [generatedVideo, setGeneratedVideo] = useState<GeneratedVideoData | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [debugLog, setDebugLog] = useState<string | null>(null);
@@ -87,44 +88,79 @@ export function App() {
     localStorage.removeItem('reelsgen_history');
   };
 
+  // Robust fetch request runner with connection retry loop
+  const executeWebhookRequest = async (targetUrl: string, payload: FormData) => {
+    const maxRetries = 10;
+    let attempt = 0;
+
+    while (attempt < maxRetries) {
+      attempt++;
+      try {
+        if (attempt > 1) {
+          setIsRetrying(true);
+          setDebugLog((prev) => `${prev}\n[${new Date().toLocaleTimeString()}] Retrying webhook request (Attempt ${attempt}/${maxRetries})...`);
+        }
+
+        const response = await fetch(targetUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        setIsRetrying(false);
+        setDebugLog((prev) => `${prev}\n[${new Date().toLocaleTimeString()}] HTTP Response Status: ${response.status} ${response.statusText}`);
+
+        if (!response.ok) {
+          let textBody = '';
+          try {
+            textBody = await response.text();
+          } catch {}
+          throw new Error(
+            `Server returned HTTP status ${response.status} (${response.statusText}). ${
+              textBody ? `Response message: ${textBody}` : ''
+            }`
+          );
+        }
+
+        const data = await response.json();
+        return data;
+      } catch (error: any) {
+        console.warn(`Request attempt ${attempt} failed:`, error);
+        
+        // If error is a network disconnect or "Failed to fetch" (common in long tasks), retry silently if attempts remain
+        const isNetworkError =
+          error.name === 'TypeError' ||
+          error.message?.toLowerCase().includes('fetch') ||
+          error.message?.toLowerCase().includes('network') ||
+          error.message?.toLowerCase().includes('failed');
+
+        if (isNetworkError && attempt < maxRetries) {
+          setDebugLog((prev) => `${prev}\n[${new Date().toLocaleTimeString()}] Connection interrupted while video is processing. Re-connecting in 4s...`);
+          await new Promise((resolve) => setTimeout(resolve, 4000));
+        } else {
+          setIsRetrying(false);
+          throw error;
+        }
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.mainTopic.trim()) return;
 
     setIsLoading(true);
+    setIsRetrying(false);
     setGeneratedVideo(null);
     setErrorMessage(null);
     const targetUrl = webhookUrl.trim() || DEFAULT_WEBHOOK_URL;
-    setDebugLog(`[${new Date().toLocaleTimeString()}] Sending POST request to: ${targetUrl}`);
+    setDebugLog(`[${new Date().toLocaleTimeString()}] Initiating POST request to: ${targetUrl}`);
 
     try {
-      console.log('Sending webhook request to:', targetUrl);
-      console.log('Payload data:', formData);
-
-      const response = await fetch(targetUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      setDebugLog((prev) => `${prev}\n[${new Date().toLocaleTimeString()}] n8n HTTP Response Status: ${response.status} ${response.statusText}`);
-
-      if (!response.ok) {
-        let textBody = '';
-        try {
-          textBody = await response.text();
-        } catch {}
-        throw new Error(
-          `n8n Webhook returned HTTP status ${response.status} (${response.statusText}). ${
-            textBody ? `Server response: ${textBody}` : ''
-          }`
-        );
-      }
-
-      const data = await response.json();
-      console.log('n8n Response Data:', data);
+      const data = await executeWebhookRequest(targetUrl, formData);
+      console.log('Webhook Response Data:', data);
       
       let videoResult: GeneratedVideoData | null = null;
       if (Array.isArray(data) && data.length > 0) {
@@ -133,7 +169,6 @@ export function App() {
         videoResult = data as GeneratedVideoData;
       }
 
-      // Check any video URL property returned by n8n (Final Video URL, Video + Captions URL, Raw Video URL, videoUrl)
       const validUrl =
         videoResult?.["Final Video URL"] ||
         videoResult?.["Video + Captions URL"] ||
@@ -153,12 +188,12 @@ export function App() {
         setDebugLog((prev) => `${prev}\n[${new Date().toLocaleTimeString()}] Video payload successfully received!`);
       } else {
         throw new Error(
-          `n8n returned HTTP 200, but JSON did not contain a valid "Final Video URL". Received payload: ${JSON.stringify(data)}`
+          `Server returned success, but response object was missing a valid "Final Video URL". Received: ${JSON.stringify(data)}`
         );
       }
     } catch (error: any) {
       console.error('Webhook execution error:', error);
-      const errStr = error.message || 'Network error or CORS policy blocked the request';
+      const errStr = error.message || 'Server request failed or returned an error';
       setDebugLog((prev) => `${prev}\n[${new Date().toLocaleTimeString()}] ERROR: ${errStr}`);
 
       if (isDemoMode) {
@@ -166,7 +201,7 @@ export function App() {
           SAMPLE_DEMO_VIDEOS[formData.generativeStyle] || SAMPLE_DEMO_VIDEOS.Default;
         const enrichedSample: GeneratedVideoData = {
           ...sample,
-          Title: `${formData.mainTopic.slice(0, 45)}... (${formData.generativeStyle} Style)`,
+          Title: sample.Title,
           orientation: formData.orientation,
           style: formData.generativeStyle,
           createdAt: new Date().toISOString(),
@@ -178,6 +213,7 @@ export function App() {
       }
     } finally {
       setIsLoading(false);
+      setIsRetrying(false);
     }
   };
 
@@ -205,6 +241,7 @@ export function App() {
         {isLoading && (
           <GenerationProgress
             webhookUrl={webhookUrl}
+            isRetrying={isRetrying}
           />
         )}
 
@@ -224,7 +261,7 @@ export function App() {
               <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
               <div className="flex-1 space-y-1">
                 <span className="font-extrabold text-slate-900 text-sm block">
-                  n8n Webhook Response Error
+                  Video Generation Error
                 </span>
                 <p className="leading-relaxed font-mono bg-red-100/60 p-2.5 rounded-lg border border-red-200 text-[11px] text-red-900 overflow-x-auto whitespace-pre-wrap">
                   {errorMessage}
@@ -256,7 +293,7 @@ export function App() {
                 onClick={() => setIsSettingsOpen(true)}
                 className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs"
               >
-                Change Webhook Endpoint
+                Change Endpoint
               </button>
               <button
                 onClick={handleForceDemo}

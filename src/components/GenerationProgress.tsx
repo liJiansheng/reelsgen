@@ -3,14 +3,16 @@ import { Loader2, Globe, Clock, Sparkles } from 'lucide-react';
 
 interface GenerationProgressProps {
   webhookUrl: string;
+  isRetrying?: boolean;
 }
 
 export const GenerationProgress: React.FC<GenerationProgressProps> = ({
   webhookUrl,
+  isRetrying = false,
 }) => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  // Live elapsed timer tick (counts indefinitely until fetch resolves or rejects)
+  // Live elapsed timer tick (counts indefinitely until request resolves)
   useEffect(() => {
     const timer = setInterval(() => {
       setElapsedSeconds((prev) => prev + 1);
@@ -38,7 +40,7 @@ export const GenerationProgress: React.FC<GenerationProgressProps> = ({
             </div>
             <div>
               <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
-                n8n Workflow Execution Active
+                {isRetrying ? 'Re-establishing Connection...' : 'AI Video Generation Pipeline Active'}
                 <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200">
                   LIVE
                 </span>
@@ -50,7 +52,7 @@ export const GenerationProgress: React.FC<GenerationProgressProps> = ({
             </div>
           </div>
 
-          {/* Stopwatch (Counts indefinitely) */}
+          {/* Stopwatch */}
           <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 self-start sm:self-auto font-mono text-sm font-bold shadow-sm">
             <Clock className="w-4 h-4 text-blue-600 animate-pulse" />
             <span>Elapsed: {formatTime(elapsedSeconds)}</span>
@@ -65,7 +67,7 @@ export const GenerationProgress: React.FC<GenerationProgressProps> = ({
           <div className="flex justify-between text-xs text-slate-500 px-1 font-medium">
             <span className="flex items-center gap-1 text-blue-700 font-bold">
               <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-              Generating video, script, and voiceover in n8n...
+              Generating video scenes, script, and voiceover...
             </span>
             <span>Waiting for server response</span>
           </div>
@@ -76,10 +78,10 @@ export const GenerationProgress: React.FC<GenerationProgressProps> = ({
           <Loader2 className="w-4 h-4 text-blue-600 animate-spin shrink-0 mt-0.5" />
           <div className="space-y-1">
             <span className="font-bold text-slate-900 text-sm block">
-              Waiting for n8n Webhook Response:
+              Processing Video Request:
             </span>
             <p className="text-slate-600 leading-relaxed text-xs">
-              The HTTP request will remain open until n8n returns your completed video stream or an error response. Please leave this window active while the workflow executes.
+              Video rendering and voice synthesis are running in the background. The page will automatically load your completed video as soon as processing finishes. Please leave this tab open.
             </p>
           </div>
         </div>
