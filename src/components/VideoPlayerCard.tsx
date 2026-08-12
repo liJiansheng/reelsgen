@@ -10,6 +10,7 @@ export interface GeneratedVideoData {
   Script: string;
   "Final Video URL": string;
   "Video + Captions URL"?: string;
+  "Raw Video URL"?: string;
   createdAt?: string;
   orientation?: 'landscape' | 'portrait';
   style?: string;
@@ -26,7 +27,13 @@ export const VideoPlayerCard: React.FC<VideoPlayerCardProps> = ({
   orientation,
   onReset,
 }) => {
-  const [activeTab, setActiveTab] = useState<'captions' | 'final'>('captions');
+  const hasCaptionsUrl = Boolean(
+    data["Video + Captions URL"] && data["Video + Captions URL"].trim().length > 0
+  );
+
+  const [activeTab, setActiveTab] = useState<'captions' | 'final'>(
+    hasCaptionsUrl ? 'captions' : 'final'
+  );
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showScript, setShowScript] = useState(false);
 
@@ -39,9 +46,9 @@ export const VideoPlayerCard: React.FC<VideoPlayerCardProps> = ({
   }, []);
 
   const videoUrl =
-    activeTab === 'captions' && data["Video + Captions URL"]
-      ? data["Video + Captions URL"]
-      : data["Final Video URL"];
+    activeTab === 'captions' && hasCaptionsUrl
+      ? data["Video + Captions URL"]!
+      : (data["Final Video URL"] || data["Raw Video URL"] || "");
 
   const handleCopy = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text);
@@ -74,30 +81,32 @@ export const VideoPlayerCard: React.FC<VideoPlayerCardProps> = ({
         </div>
 
         {/* Video Mode Switcher Tabs */}
-        <div className="flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200 self-stretch sm:self-auto">
-          <button
-            onClick={() => setActiveTab('captions')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              activeTab === 'captions'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Subtitles className="w-3.5 h-3.5" />
-            With Captions
-          </button>
-          <button
-            onClick={() => setActiveTab('final')}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              activeTab === 'final'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Play className="w-3.5 h-3.5" />
-            Clean Video
-          </button>
-        </div>
+        {hasCaptionsUrl && (
+          <div className="flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200 self-stretch sm:self-auto">
+            <button
+              onClick={() => setActiveTab('captions')}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === 'captions'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Subtitles className="w-3.5 h-3.5" />
+              With Captions
+            </button>
+            <button
+              onClick={() => setActiveTab('final')}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                activeTab === 'final'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Play className="w-3.5 h-3.5" />
+              Clean Video
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Main Grid: Player + Details */}
@@ -112,6 +121,7 @@ export const VideoPlayerCard: React.FC<VideoPlayerCardProps> = ({
             }`}
           >
             <video
+              key={videoUrl}
               src={videoUrl}
               controls
               autoPlay
@@ -195,7 +205,7 @@ export const VideoPlayerCard: React.FC<VideoPlayerCardProps> = ({
             </div>
           </div>
 
-          {/* Primary Action Buttons - Vibrant Blue */}
+          {/* Primary Action Buttons */}
           <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
             <a
               href={videoUrl}

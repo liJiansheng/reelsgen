@@ -5,7 +5,7 @@ import { GenerationProgress } from './components/GenerationProgress';
 import { VideoPlayerCard, GeneratedVideoData } from './components/VideoPlayerCard';
 import { SettingsModal, DEFAULT_WEBHOOK_URL } from './components/SettingsModal';
 import { HistoryDrawer } from './components/HistoryDrawer';
-import { Video, Sparkles, Wand2, Monitor, Smartphone, MessageSquare, Clock, AlertTriangle, Layers, Terminal, History, Settings } from 'lucide-react';
+import { Video, Sparkles, Wand2, Monitor, Smartphone, MessageSquare, Clock, AlertTriangle, Layers, Terminal } from 'lucide-react';
 
 interface FormData {
   mainTopic: string;
@@ -24,32 +24,23 @@ const PRESET_TOPICS = [
 ];
 
 const SAMPLE_DEMO_VIDEOS: Record<string, GeneratedVideoData> = {
-  Lego: {
-    id: 101,
-    order: 'sample-01',
-    Title: 'The Secret History of Lego Bricks 🧱',
-    Description: 'Discover how a small Danish carpentry workshop created the world’s most beloved modular toy system! #Lego #History #AIReels',
-    Script: '[Hook] Did you know Lego started in a small wooden toy workshop in Denmark in 1932?\n[Body] Ole Kirk Christiansen coined the name Lego from the Danish words "Leg Godt" meaning "Play Well". When plastic injection molding emerged, Lego revolutionized building toys with their iconic interlocking brick system.',
-    "Final Video URL": 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    "Video + Captions URL": 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-  },
-  Minecraft: {
-    id: 102,
-    order: 'sample-02',
-    Title: 'Cyberpunk Minecraft City 2080 ⛏️',
-    Description: 'An epic journey through neon blocky skyscrapers and glowing redstone trains in a futuristic block universe. #Minecraft #Cyberpunk #Voxel',
-    Script: '[Hook] Imagine Minecraft 100 years into the future with neon lights and flying minecarts!\n[Body] Towering redstone skyscrapers reach into the stratosphere while cybernetically enhanced Villagers trade high-tech obsidian chips.',
-    "Final Video URL": 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    "Video + Captions URL": 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+  Anime: {
+    id: 1259,
+    order: '52.00000000000000000000',
+    Title: "Timmy's Incredible Robot Adventure!",
+    Description: 'Join Timmy on an epic quest with his robot friend! #Adventure #KidsStory #RobotFun',
+    Script: "What if your best friend was a robot? Get ready to blast off with Timmy on an unforgettable adventure! Once upon a time, a curious boy named Timmy found a shiny, blue robot in his backyard. He named him Robo, and together they were unstoppable! One sunny morning, Timmy and Robo discovered a hidden treasure map inside a bottle. “Let’s go find it!” Timmy exclaimed, and off they went! They trekked through the enchanted forest, dodged tricky traps, and solved super puzzles. With Robo's cool gadgets and Timmy's brave heart, they cracked the code to the treasure! At the end of their journey, they found not just gold coins and jewels, but a magical key that unlocked a friendship like no other! Timmy and Robo learned that the best treasure of all was their connection. That day, they returned home, ready for their next big adventure together! What was your favorite part of Timmy's adventure?",
+    "Final Video URL": 'https://storage.googleapis.com/nca-mod-bucket/8aa4fc34-2c7a-498d-b8b6-40cf79846b05.mp4',
+    "Video + Captions URL": '',
   },
   Default: {
-    id: 103,
-    order: 'sample-03',
-    Title: 'Quantum Computing Unleashed 🚀',
-    Description: 'How superpositions and qubits will reshape medicine, encryption, and AI. #Quantum #TechReels #FutureAI',
-    Script: '[Hook] Classical computers process bits as 0 or 1. Quantum computers process qubits in both states simultaneously!\n[Body] This exponential computing power allows AI algorithms to model complex molecules in seconds, unlocking new cures.',
-    "Final Video URL": 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    "Video + Captions URL": 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+    id: 1259,
+    order: '52.00000000000000000000',
+    Title: "Timmy's Incredible Robot Adventure!",
+    Description: 'Join Timmy on an epic quest with his robot friend! #Adventure #KidsStory #RobotFun',
+    Script: "What if your best friend was a robot? Get ready to blast off with Timmy on an unforgettable adventure! Once upon a time, a curious boy named Timmy found a shiny, blue robot in his backyard. He named him Robo, and together they were unstoppable! One sunny morning, Timmy and Robo discovered a hidden treasure map inside a bottle. “Let’s go find it!” Timmy exclaimed, and off they went! They trekked through the enchanted forest, dodged tricky traps, and solved super puzzles. With Robo's cool gadgets and Timmy's brave heart, they cracked the code to the treasure! At the end of their journey, they found not just gold coins and jewels, but a magical key that unlocked a friendship like no other! Timmy and Robo learned that the best treasure of all was their connection. That day, they returned home, ready for their next big adventure together! What was your favorite part of Timmy's adventure?",
+    "Final Video URL": 'https://storage.googleapis.com/nca-mod-bucket/8aa4fc34-2c7a-498d-b8b6-40cf79846b05.mp4',
+    "Video + Captions URL": '',
   },
 };
 
@@ -68,7 +59,6 @@ export function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [debugLog, setDebugLog] = useState<string | null>(null);
 
-  // Production n8n webhook URL
   const [webhookUrl, setWebhookUrl] = useState<string>(DEFAULT_WEBHOOK_URL);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -139,13 +129,21 @@ export function App() {
       let videoResult: GeneratedVideoData | null = null;
       if (Array.isArray(data) && data.length > 0) {
         videoResult = data[0];
-      } else if (data && typeof data === 'object' && (data["Final Video URL"] || data.videoUrl)) {
-        videoResult = data;
+      } else if (data && typeof data === 'object') {
+        videoResult = data as GeneratedVideoData;
       }
 
-      if (videoResult && (videoResult["Final Video URL"] || videoResult["Video + Captions URL"])) {
+      // Check any video URL property returned by n8n (Final Video URL, Video + Captions URL, Raw Video URL, videoUrl)
+      const validUrl =
+        videoResult?.["Final Video URL"] ||
+        videoResult?.["Video + Captions URL"] ||
+        videoResult?.["Raw Video URL"] ||
+        (videoResult as any)?.videoUrl;
+
+      if (videoResult && validUrl && validUrl.trim().length > 0) {
         const enrichedResult: GeneratedVideoData = {
           ...videoResult,
+          "Final Video URL": validUrl,
           orientation: formData.orientation,
           style: formData.generativeStyle,
           createdAt: new Date().toISOString(),
@@ -155,7 +153,7 @@ export function App() {
         setDebugLog((prev) => `${prev}\n[${new Date().toLocaleTimeString()}] Video payload successfully received!`);
       } else {
         throw new Error(
-          `n8n returned HTTP 200, but JSON did not contain a "Final Video URL" property. Received payload: ${JSON.stringify(data)}`
+          `n8n returned HTTP 200, but JSON did not contain a valid "Final Video URL". Received payload: ${JSON.stringify(data)}`
         );
       }
     } catch (error: any) {
@@ -188,7 +186,7 @@ export function App() {
       SAMPLE_DEMO_VIDEOS[formData.generativeStyle] || SAMPLE_DEMO_VIDEOS.Default;
     const enrichedSample: GeneratedVideoData = {
       ...sample,
-      Title: `${formData.mainTopic.slice(0, 45)}... (${formData.generativeStyle} Style)`,
+      Title: sample.Title,
       orientation: formData.orientation,
       style: formData.generativeStyle,
       createdAt: new Date().toISOString(),
@@ -287,7 +285,7 @@ export function App() {
                 onChange={(e) => setFormData({ ...formData, mainTopic: e.target.value })}
                 rows={4}
                 required
-                placeholder="e.g. The incredible story of how Lego bricks were invented, featuring 3D animated blocks and dramatic storytelling..."
+                placeholder="e.g. Timmy's Incredible Robot Adventure! Get ready to blast off with Timmy and Robo..."
                 className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium"
               />
 
