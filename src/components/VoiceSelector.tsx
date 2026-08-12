@@ -14,39 +14,30 @@ export interface VoiceOption {
 export const VOICE_OPTIONS: VoiceOption[] = [
   {
     id: 'man',
-    name: 'Deep Male Voice',
+    name: 'Man',
     value: '28b049a7574f46bc9d7122761363bda0',
-    tag: 'Male / Cinematic',
+    tag: 'Male / Deep',
     accent: 'American',
-    description: 'Resonant, clear, and engaging tone for stories & commentary',
+    description: 'Resonant, clear, and engaging male voice model',
     avatarBg: 'bg-sky-500 text-white',
   },
   {
     id: 'woman',
-    name: 'Warm Female Voice',
+    name: 'Woman',
     value: '5ac6fb7171ba419190700620738209d8',
-    tag: 'Female / Natural',
+    tag: 'Female / Smooth',
     accent: 'American',
-    description: 'Expressive, friendly, and smooth narrator for reels',
+    description: 'Expressive, warm, and natural female narrator model',
     avatarBg: 'bg-fuchsia-500 text-white',
   },
   {
     id: 'mysterious',
-    name: 'Mysterious / Dark',
+    name: 'Mysterious',
     value: '6a735fd94f67467eb592567972ee0d51',
-    tag: 'Thriller / Lore',
+    tag: 'Dark / Suspense',
     accent: 'Deep Pitch',
-    description: 'Suspenseful and enigmatic narration for horror or secrets',
+    description: 'Suspenseful and enigmatic voice for thriller & lore',
     avatarBg: 'bg-purple-600 text-white',
-  },
-  {
-    id: 'narrator',
-    name: 'Documentary Host',
-    value: 'a89d711b2c554a9381e4b3b27b165412',
-    tag: 'Educational',
-    accent: 'British',
-    description: 'Authoritative, calm, and informative pace for facts & history',
-    avatarBg: 'bg-emerald-500 text-white',
   },
 ];
 
@@ -64,7 +55,7 @@ export const VoiceSelector: React.FC<VoiceSelectorProps> = ({
       <div className="flex items-center justify-between">
         <label className="flex items-center gap-2 text-sm font-bold text-slate-800">
           <Mic className="w-4 h-4 text-blue-600" />
-          AI Voice Synthesis
+          AI Voice Model (Fish Audio)
         </label>
         <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
           <Volume2 className="w-3.5 h-3.5 text-blue-600" />
@@ -72,7 +63,7 @@ export const VoiceSelector: React.FC<VoiceSelectorProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {VOICE_OPTIONS.map((voice) => {
           const isSelected = selectedVoice === voice.value;
           return (
@@ -80,7 +71,7 @@ export const VoiceSelector: React.FC<VoiceSelectorProps> = ({
               key={voice.value}
               type="button"
               onClick={() => onSelectVoice(voice.value)}
-              className={`flex items-start gap-3.5 p-4 rounded-xl text-left transition-all duration-200 ${
+              className={`flex items-start gap-3 p-4 rounded-xl text-left transition-all duration-200 ${
                 isSelected
                   ? 'glass-panel-active ring-2 ring-blue-600/30'
                   : 'glass-panel-interactive'
@@ -110,7 +101,7 @@ export const VoiceSelector: React.FC<VoiceSelectorProps> = ({
                     {voice.tag}
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 line-clamp-1">
+                <p className="text-xs text-slate-600 line-clamp-2">
                   {voice.description}
                 </p>
 
